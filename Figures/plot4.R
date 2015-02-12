@@ -1,59 +1,39 @@
-setwd("./DATA")
-download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip",
-              destfile="./power.zip",
-              method ="curl")
-unzip("./power.zip")
-library(dplyr)
-power <- filter((read.table("./household_power_consumption.txt", 
-                            sep=";", 
-                            header=T, 
-                            dec=".", 
-                            na.strings="?",
-                            colClasses=c("character","character",
-                                         "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
-), 
-Date=="1/2/2007" | Date=="2/2/2007")
-power$DT <- paste(power$Date, power$Time)
-power$DT <- as.POSIXct(strptime(power$DT, "%d/%m/%Y %H:%M:%S"))
-power$Weekdays <- as.factor(weekdays(power$DT))
-
-## Making Plot
-par(mfrow = c(2,2))
-with(power, {
-  ##plot 1
-  plot.ts(power$Global_active_power,  
-          ylab="Global Active Power (kilowatts)",
-          xlab=NULL,
-          type="s",
-          xaxt="n")
-  axis(1, at=c(0,1450,2900), label=c("Thu", "Fri", "Sat"))
-  ##plot 2
-  plot.ts(power$Voltage,  
-          ylab="Voltage",
-          xlab="datetime",
-          type="s",
-          xaxt="n")
-  axis(1, at=c(0,1450,2900), label=c("Thu", "Fri", "Sat"))
-  ##plot 3
-  plot.ts(power$Sub_metering_1,
-          ylab="Energy sub mettering",
-          xlab=NULL,
-          type="s",
-          xaxt="n")
-  lines(power$Sub_metering_2, col="red")
-  lines(power$Sub_metering_3, col="blue")
-  ##legend("topright", c("Sub_mettering_1", "Sub_mettering_2", "Sub_mettering_3"),lty=1, lwd=1,col=c("black", "red", "blue"))
-  axis(1, at=c(0,1450,2900), label=c("Thu", "Fri", "Sat"))
-  ##plot4
-  plot.ts(power$Global_reactive_power,  
-          ylab="Global_reactive_power",
-          xlab="datetime",
-          type="s",
-          xaxt="n")
-  axis(1, at=c(0,1450,2900), label=c("Thu", "Fri", "Sat"))
-})  
-
-dev.copy(png, file="./plot4.png", 
-         width=480,
-         height=480)
+df<-read.table("household_power_consumption.txt",header=T, sep=";")
+df$Date<-as.Date(df$Date,"%d/%m/%Y")
+sdf<-subset(df, Date=='2007-02-01')
+sdf2<-subset(df, Date=='2007-02-02')
+sdf3<-rbind(sdf,sdf2)
+h1<-sdf3$Sub_metering_1
+h1<-gsub("?","",h1)
+h1<-as.numeric(h1)
+h2<-sdf3$Sub_metering_2
+h2<-gsub("?","",h2)
+h2<-as.numeric(h2)
+h3<-sdf3$Sub_metering_3
+h3<-gsub("?","",h3)
+h3<-as.numeric(h3)
+h<-sdf3$Global_active_power
+h<-gsub("?","",h)
+h<-as.numeric(h)
+v<-sdf3$Voltage
+v<-gsub("?","",v)
+v<-as.numeric(v)
+p<-sdf3$Global_reactive_power
+p<-gsub("?","",p)
+p<-as.numeric(p)
+d<-paste(sdf3$Date,sdf3$Time)
+x<-as.POSIXct(d)
+png(filename='plot4.png', width = 480, height = 480, units='px')
+par(mfrow=c(2,2))
+plot(x,h, type='n',xlab='', ylab='Global active power')
+lines(x,h)
+plot(x,v, type='n',xlab='datetime', ylab='Voltage')
+lines(x,v)
+plot(x,h3, type='n',xlab='', ylab='Energy sub metering',ylim=c(0, 39))
+lines(x,h1)
+lines(x,h2,col='red')
+lines(x,h3,col='blue')
+legend('topright', c("Sub_metering_1","Sub_metering_2","Sub_metering_3"), col=c("black","red","blue"), lwd=1, lty=c(1,1,1))
+plot(x,p, type='n',xlab='datetime', ylab='Global reactive power')
+lines(x,p)
 dev.off()
